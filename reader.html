@@ -1,27 +1,62 @@
-const urlParams = new URLSearchParams(window.location.search);
-const chapterNum = urlParams.get('ch');
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شاشة القراءة</title>
+    <style>
+        body { background-color: #000; color: #fff; font-family: sans-serif; margin: 0; padding: 0; direction: rtl; }
+        .reader-nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: #1f1f1f; position: sticky; top: 0; z-index: 100; }
+        .btn { background: #ff4757; color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; }
+        .manga-viewer { display: flex; flex-direction: column; align-items: center; width: 100%; }
+        .manga-viewer img { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
 
-if (chapterNum) {
-    document.getElementById('chapter-title').innerText = `الفصل ${chapterNum}`;
-    
-    async function showManga() {
-        const { data, error } = await supabase
-            .from('chapters')
-            .select('images')
-            .eq('number', chapterNum)
-            .single();
+    <div class="reader-nav">
+        <a href="index.html" class="btn">🔙 العودة للرئيسية</a>
+        <h2 id="chapter-title">جاري تحميل صفحات الفصل...</h2>
+    </div>
 
-        const viewer = document.getElementById('manga-viewer');
-        if (data && data.images) {
-            data.images.forEach((url) => {
-                let img = document.createElement('img');
-                img.src = url;
-                img.loading = "lazy";
-                viewer.appendChild(img);
-            });
-        } else {
-            document.getElementById('chapter-title').innerText = "الفصل غير موجود";
+    <div id="manga-viewer" class="manga-viewer">
+        </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const chapterNum = urlParams.get('ch');
+
+        const SUPABASE_URL = "https://dcsybbntekheaftahhtr.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjc3liYm50ZWtoZWFmdGFoaHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwOTAxMzgsImV4cCI6MjA5NTY2NjEzOH0.DUkpbxhTr0JwRn0hNK2L-_nT1JXOjPkesUDvZvKxItE"; 
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        if (chapterNum) {
+            document.getElementById('chapter-title').innerText = `الفصل رقم ${chapterNum}`;
+            
+            async function showManga() {
+                const { data, error } = await _supabase
+                    .from('chapters')
+                    .select('images')
+                    .eq('number', chapterNum)
+                    .single();
+
+                const viewer = document.getElementById('manga-viewer');
+                
+                if (data && data.images) {
+                    viewer.innerHTML = ""; // حذف نص التحميل
+                    data.images.forEach((url) => {
+                        let img = document.createElement('img');
+                        img.src = url;
+                        img.loading = "lazy"; // تسريع تحميل الصور للمستخدمين
+                        viewer.appendChild(img);
+                    });
+                } else {
+                    document.getElementById('chapter-title').innerText = "عذراً، الفصل غير موجود!";
+                }
+            }
+            showManga();
         }
-    }
-    showManga();
-}
+    </script>
+</body>
+</html>

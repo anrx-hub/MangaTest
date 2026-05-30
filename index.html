@@ -1,26 +1,30 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>موقع المانجا الخاص بي</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+<div id="chapters-list" class="chapters-list">جاري تحميل الفصول...</div>
 
-    <header>
-        <h1>بوابة المانجا</h1>
-        <p>اقرأ فصولك المفضلة مجانًا</p>
-    </header>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const SUPABASE_URL = "https://dcsybbntekheaftahhtr.supabase.co/";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjc3liYm50ZWtoZWFmdGFoaHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwOTAxMzgsImV4cCI6MjA5NTY2NjEzOH0.DUkpbxhTr0JwRn0hNK2L-_nT1JXOjPkesUDvZvKxItE";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    <main class="container">
-        <h2>قائمة الفصول</h2>
-        <div class="chapters-list">
-            <!-- لتغيير الفصول أو إضافتها، قم بتعديل الرابط وتحديد رقم الفصل والإجمالي -->
-            <a href="reader.html?ch=1&total=3" class="chapter-card">الفصل الأول: البداية</a>
-            <a href="reader.html?ch=2&total=2" class="chapter-card">الفصل الثاني: التحدي</a>
-        </div>
-    </main>
+    async function loadChapters() {
+        // جلب الفصول مرتبة تنازلياً حسب رقم الفصل
+        const { data, error } = await supabase
+            .from('chapters')
+            .select('*')
+            .order('number', { ascending: false });
 
-</body>
-</html>
+        const listDiv = document.getElementById('chapters-list');
+        listDiv.innerHTML = "";
+
+        if (data) {
+            data.forEach((chapter) => {
+                const card = document.createElement('a');
+                card.href = `reader.html?ch=${chapter.number}`;
+                card.className = "chapter-card";
+                card.innerText = `الفصل ${chapter.number}: ${chapter.title}`;
+                listDiv.appendChild(card);
+            });
+        }
+    }
+    loadChapters();
+</script>

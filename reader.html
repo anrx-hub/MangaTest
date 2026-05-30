@@ -1,46 +1,27 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قراءة الفصل</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+const urlParams = new URLSearchParams(window.location.search);
+const chapterNum = urlParams.get('ch');
 
-    <div class="reader-nav">
-        <a href="index.html" class="btn">الرئيسية</a>
-        <h2 id="chapter-title">جاري تحميل الفصل...</h2>
-    </div>
+if (chapterNum) {
+    document.getElementById('chapter-title').innerText = `الفصل ${chapterNum}`;
+    
+    async function showManga() {
+        const { data, error } = await supabase
+            .from('chapters')
+            .select('images')
+            .eq('number', chapterNum)
+            .single();
 
-    <div id="manga-viewer" class="manga-viewer">
-        <!-- الصور ستظهر هنا تلقائيًا عبر الجافاسكريبت -->
-    </div>
-
-    <script>
-        // الحصول على رقم الفصل وعدد الصور من الرابط
-        const urlParams = new URLSearchParams(window.location.search);
-        const chapterNum = urlParams.get('ch');
-        const totalPages = parseInt(urlParams.get('total'));
-
-        if(chapterNum && totalPages) {
-            document.getElementById('chapter-title').innerText = `الفصل ${chapterNum}`;
-            const viewer = document.getElementById('manga-viewer');
-
-            // توليد الصور تلقائيًا بناءً على العدد المحدد
-            for (let i = 1; i <= totalPages; i++) {
-                // تحويل الرقم إلى صيغة خانتين (مثال: 1 يصبح 01) لتطابق التسمية
-                let pageNum = i < 10 ? '0' + i : i; 
-                
+        const viewer = document.getElementById('manga-viewer');
+        if (data && data.images) {
+            data.images.forEach((url) => {
                 let img = document.createElement('img');
-                img.src = `chapters/chapter${chapterNum}/${pageNum}.jpg`;
-                img.alt = `صفحة ${pageNum}`;
-                img.loading = "lazy"; // تسريع تحميل الموقع
+                img.src = url;
+                img.loading = "lazy";
                 viewer.appendChild(img);
-            }
+            });
         } else {
-            document.getElementById('chapter-title').innerText = "خطأ في تحميل الفصل";
+            document.getElementById('chapter-title').innerText = "الفصل غير موجود";
         }
-    </script>
-</body>
-</html>
+    }
+    showManga();
+}

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة تحكم الأدمن - Supabase</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <div class="container">
+        <h2>لوحة الأدمن (Supabase) - إضافة فصل</h2>
+        <form id="upload-form">
+            <input type="number" id="ch-number" placeholder="رقم الفصل" required><br><br>
+            <input type="text" id="ch-title" placeholder="عنوان الفصل" required><br><br>
+            <input type="file" id="ch-images" multiple accept="image/*" required><br><br>
+            <button type="submit" class="btn">نشر الفصل</button>
+        </form>
+        <p id="status"></p>
+    </div>
+
+    <script>
+        // ضع روابط مشروعك هنا
+        const SUPABASE_URL = "https://dcsybbntekheaftahhtr.supabase.co/";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRjc3liYm50ZWtoZWFmdGFoaHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwOTAxMzgsImV4cCI6MjA5NTY2NjEzOH0.DUkpbxhTr0JwRn0hNK2L-_nT1JXOjPkesUDvZvKxItE";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.getElementById('upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const status = document.getElementById('status');
+            const chNum = document.getElementById('ch-number').value;
+            const chTitle = document.getElementById('ch-title').value;
+            const files = document.getElementById('ch-images').files;
+
+            status.innerText = "جاري رفع الصور إلى Supabase...";
+            let imageUrls = [];
+
+            for(let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const filePath = `chapter_${chNum}/${file.name}`;
+                
+                // 1. رفع الصورة إلى الـ Storage Bucket
+                const { data, error } = await supabase.storage
+                    .from('manga-storage')
+                    .upload(filePath, file);
+
+                if (error) {
+                    status.innerText = "خطأ أثناء الرفع: " + error.message;
+                    return;
+                }
+
+                // 2. الحصول على رابط الصورة العام
+                const { data: urlData } = supabase.storage
+                    .from('manga-storage')
+                    .getPublicUrl(filePath);
+                
+                imageUrls.push(urlData.publicUrl);
+            }
+
+            // 3. حفظ بيانات الفصل في قاعدة البيانات (جدول chapters)
+            const { error: dbError } = await supabase
+                .from('chapters')
+                .insert([
+                    { number: parseInt(chNum), title: chTitle, images: imageUrls }
+                ]);
+
+            if (dbError) {
+                status.innerText = "خطأ في حفظ البيانات: " + dbError.message;
+            } else {
+                status.innerText = "تم نشر الفصل بنجاح!";
+                document.getElementById('upload-form').reset();
+            }
+        });
+    </script>
+</body>
+</html>
